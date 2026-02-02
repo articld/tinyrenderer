@@ -1,7 +1,7 @@
 #include "model.h"
 
 Model::Model(std::string model_path){
-    std::array<float, 3> vert_temp;
+    vec3 vert_temp;
     std::string type="";
     std::ifstream in(model_path);
 
@@ -24,36 +24,15 @@ Model::Model(std::string model_path){
         }
 
         else if(!line.compare(0,2, "f ")){
-            int f, t, n, count = 0;
+            //TODO: aggiungere il check per verificare se le facce sono triangolari
+            int f, t, n;
             iss >> trash;
             while(iss>> f >> trash >> t >> trash >> n){
+                std::cout<<f<<std::endl;
                 faces.push_back(--f);
-                count ++;
-            }
-            if (count != 3){
-                std::cerr<<"faccia degenere";
-                return;
             }
         }
-    }
 
-    auto iter = verts.begin();
-    for(; iter!=verts.end(); iter++){
-        for(int i = 0; i<3; i++){
-            std::cout<<(*iter)[i] <<std::endl;
-        }
     }
-
-    auto iter1 = faces.begin();
-    for(; iter1 != faces.end(); iter++){
-        for(int i = 0; i<3; i++){
-            std::cout<<(*iter)[i] <<std::endl;
-        }
-    }
-
     in.close();
-}
-
-void Model::get_file(){
-    std::cout<<model;
 }

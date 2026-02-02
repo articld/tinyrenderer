@@ -44,7 +44,6 @@ int main(int argc, char** argv) {
     TGAImage framebuffer(width, height, TGAImage::RGB);
 
     Model model("./obj/diablo3_pose/diablo3_pose.obj");
-    model.get_file();
 
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
