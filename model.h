@@ -9,14 +9,14 @@
 
 class Model{
     private:
-        std::vector<vec3> verts;
-        std::vector<int> faces;
+        std::vector<vec3> verts = {};
+        std::vector<int> faces = {};
 
     public:
         Model(std::string model_path);
-        inline const vec3 get_vert(int n){ return verts[n];}
-        inline const int get_nverts(){ return verts.size(); }
-        inline const int get_face(int n){ return faces[n]; }
-        inline const int get_nface(){ return faces.size()/3; }
+        inline vec3 get_vert(const int n) const { return verts[n];}
+        inline vec3 get_vert(const int iface, const int n) const { return verts[faces[iface*3+n]];}
+        inline int get_nverts() const { return verts.size(); }
+        inline int get_nface() const { return faces.size()/3; }
 
 };
