@@ -51,18 +51,31 @@ void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuf
     std::sort(vertices, vertices + n, [](const vec2& a, const vec2&b){
         return a.y<b.y; //funzione lambda, creo una funzione senza nome, con parametri a,b, restitiusice booleano per sort
     });
-    
-    draw_line2d(ax, ay, bx, by, framebuffer, color);
-    draw_line2d(bx, by, cx, cy, framebuffer, color);
-    draw_line2d(cx, cy, ax, ay, framebuffer, color);
 
-    //trinagolo (7,45) (35,100), (45, 60)
+    int total_height = vertices[2].y - vertices[0].y; 
+
+    if(vertices[0].y != vertices[1].y){//controllo faccia non degenere
+        int segment_height = vertices[1].y - vertices[0].y;
+        //faccio passare la linea orizzontale da ay a by
+        for(int y = vertices[0].y ; y <= vertices[1].y; y++){ //rasterizzazione bordo
+            int x1 = vertices[0].x + ((vertices[2].x - vertices[0].x)*(y - vertices[0].y)) / total_height;
+            int x2 = vertices[0].x + ((vertices[1].x - vertices[0].x)*(y - vertices[0].y)) / segment_height;
+            for (int x = std::min(x1, x2); x < std::max(x1,x2); x++) //rasterizza solo la parte inferiore
+                framebuffer.set(x, y, color);
+        }
+    } 
+
+    if(vertices[1].y != vertices[2].y){//controllo faccia non degenere
+        int segment_height = vertices[2].y - vertices[1].y;
+        //passo la linea orizzontale da by a cy
+        for(int y = vertices[1].y ; y <= vertices[2].y; y++){ //rasterizzazione bordo
+            int x1 = vertices[0].x + ((vertices[2].x - vertices[0].x)*(y - vertices[0].y)) / total_height;
+            int x2 = vertices[1].x + ((vertices[2].x - vertices[1].x)*(y - vertices[1].y)) / segment_height;
+            for (int x = std::min(x1, x2); x < std::max(x1,x2); x++)
+                framebuffer.set(x, y, color);
+        }
+    } 
 }
-
-//TODO:
-//ordinare vertici del trianglo per la loro cordinata y
-//rasterizzare contemporaneamente il lato sinistro e destro del triangolo
-//disegnare righe orizzontali tra il limite sinistro e destro
 
 int main(int argc, char** argv) {
     TGAImage framebuffer(width, height, TGAImage::RGB);
