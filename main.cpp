@@ -1,11 +1,12 @@
 #include <tuple>
+#include <algorithm>
 
 #include "vec.h"
 #include "model.h"
 #include "tgaimage.h"
 
-constexpr int width  = 800;
-constexpr int height = 800;
+constexpr int width  = 128;
+constexpr int height = 128;
 
 constexpr TGAColor white   = {255, 255, 255, 255}; // attention, BGRA order
 constexpr TGAColor green   = {  0, 255,   0, 255};
@@ -43,30 +44,31 @@ std::tuple<int,int> project(vec3 v) {
              (v.y + 1.) * height/2 };
 }
 
+void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
+    vec2 vertices[3] = {{ax, ay}, {bx, by}, {cx, cy}};
+    int n = sizeof(vertices)/sizeof(vertices[0]);
+
+    std::sort(vertices, vertices + n, [](const vec2& a, const vec2&b){
+        return a.y<b.y; //funzione lambda, creo una funzione senza nome, con parametri a,b, restitiusice booleano per sort
+    });
+    
+    draw_line2d(ax, ay, bx, by, framebuffer, color);
+    draw_line2d(bx, by, cx, cy, framebuffer, color);
+    draw_line2d(cx, cy, ax, ay, framebuffer, color);
+
+    //trinagolo (7,45) (35,100), (45, 60)
+}
+
+//TODO:
+//ordinare vertici del trianglo per la loro cordinata y
+//rasterizzare contemporaneamente il lato sinistro e destro del triangolo
+//disegnare righe orizzontali tra il limite sinistro e destro
+
 int main(int argc, char** argv) {
-    if (argc != 2) {
-        std::cerr << "Usage: " << argv[0] << " obj/model.obj" << std::endl;
-        return 1;
-    }
-
-    Model model(argv[1]);
     TGAImage framebuffer(width, height, TGAImage::RGB);
-
-    for (int i=0; i<model.get_nface(); i++) {
-        auto [ax, ay] = project(model.get_vert(i, 0));
-        auto [bx, by] = project(model.get_vert(i, 1));
-        auto [cx, cy] = project(model.get_vert(i, 2));
-        draw_line2d(ax, ay, bx, by, framebuffer, red);
-        draw_line2d(bx, by, cx, cy, framebuffer, red);
-        draw_line2d(cx, cy, ax, ay, framebuffer, red);
-    }
-
-    for (int i=0; i<model.get_nverts(); i++) {
-        vec3 v = model.get_vert(i);
-        auto [x, y] = project(v);
-        framebuffer.set(x, y, white);
-    }
-
+    triangle(  7, 45, 35, 100, 45,  60, framebuffer, red);
+    triangle(120, 35, 90,   5, 45, 110, framebuffer, white);
+    triangle(115, 83, 80,  90, 85, 120, framebuffer, green);
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
 }

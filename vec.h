@@ -14,10 +14,18 @@ template<int n> std::ostream& operator<<(std::ostream& out, const vec<n>& v){
     return out;
 };
 
+template<> struct vec<2>{
+    double x=0, y=0;
+    double& operator[](const int i){ assert(i>=0 && i<2); return i ? y : x; }
+    double operator[](const int i) const { assert(i>=0 && i<2); return i ? y: x; }
+
+};
+
 template<> struct vec<3>{
     double x=0, y=0, z=0;
     double& operator[](const int i){ assert(i>=0 && i<3); return i ?(i==1 ? y:z) : x; }
     double operator[](const int i) const { assert(i>=0 && i<3); return i ?(i==1 ? y:z) : x; }
 };
 
+typedef vec<2> vec2;
 typedef vec<3> vec3;
