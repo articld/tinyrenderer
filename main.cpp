@@ -1,4 +1,5 @@
 #include <tuple>
+#include <cmath>
 
 #include "vec.h"
 #include "model.h"
@@ -54,6 +55,7 @@ void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuf
     int bbmaxy = std::max(std::max(ay,by), cy);
 
     double total_area = signed_triangle_area(ax, ay, bx, by, cx, cy);
+    if(total_area <1 )return; 
 
     #pragma omp parallel for
     for(int x=bbminx; x<=bbmaxx; x++){
@@ -81,15 +83,9 @@ int main(int argc, char** argv) {
         auto [ax, ay] = project(model.get_vert(i, 0));
         auto [bx, by] = project(model.get_vert(i, 1));
         auto [cx, cy] = project(model.get_vert(i, 2));
-        draw_line2d(ax, ay, bx, by, framebuffer, red);
-        draw_line2d(bx, by, cx, cy, framebuffer, red);
-        draw_line2d(cx, cy, ax, ay, framebuffer, red);
-    }
-
-    for (int i=0; i<model.get_nverts(); i++) {
-        vec3 v = model.get_vert(i);
-        auto [x, y] = project(v);
-        framebuffer.set(x, y, white);
+        TGAColor random;
+        for(int c :{0, 1, 2}) random[c] = std::rand() % 255;
+        triangle(ax, ay, bx, by, cx, cy, framebuffer, random);
     }
 
     framebuffer.write_tga_file("framebuffer.tga");
