@@ -43,6 +43,31 @@ std::tuple<int,int> project(vec3 v) {
              (v.y + 1.) * height/2 };
 }
 
+double signed_triangle_area(int ax, int ay, int bx, int by, int cx, int cy){
+    return .5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));
+}
+
+void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
+    int bbminx = std::min(std::min(ax,bx), cx);
+    int bbminy = std::min(std::min(ay,by), cy);
+    int bbmaxx = std::max(std::max(ax,bx), cx);
+    int bbmaxy = std::max(std::max(ay,by), cy);
+
+    double total_area = signed_triangle_area(ax, ay, bx, by, cx, cy);
+
+    #pragma omp parallel for
+    for(int x=bbminx; x<=bbmaxx; x++){
+        for(int y=bbminy; y<=bbmaxy; y++){
+            double alpha = signed_triangle_area(x, y, bx, by, cx, cy) / total_area;
+            double beta = signed_triangle_area(x, y, cx, cy, ax, ay) / total_area;
+            double gamma = signed_triangle_area(x, y, ax, ay, bx, by) / total_area;
+            if (alpha <0 || beta <0 || gamma <0) continue;
+            framebuffer.set(x,y, color);
+        }
+    }
+}
+
+
 int main(int argc, char** argv) {
     if (argc != 2) {
         std::cerr << "Usage: " << argv[0] << " obj/model.obj" << std::endl;
