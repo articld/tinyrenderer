@@ -62,13 +62,11 @@ void triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, in
             double beta = signed_triangle_area(x, y, cx, cy, ax, ay) / total_area;
             double gamma = signed_triangle_area(x, y, ax, ay, bx, by) / total_area;
             if (alpha <0 || beta <0 || gamma <0) continue;
+            if(alpha > 0.1 && beta > 0.1 && gamma >0.1)continue;
             unsigned char b = 0, r = 0, g = 0;
-            if( alpha > 0.1)
-                b = static_cast<unsigned char>(alpha * az);
-            if( beta > 0.1)
-                r = static_cast<unsigned char>(beta * bz);
-            if( gamma > 0.1)
-                g = static_cast<unsigned char>(gamma * cz);
+            b = static_cast<unsigned char>(alpha * az);
+            r = static_cast<unsigned char>(beta * bz);
+            g = static_cast<unsigned char>(gamma * cz);
             framebuffer.set(x,y, {b, r, g});
         }
     }
