@@ -39,16 +39,17 @@ void draw_line2d(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor
     }
 }
 
-std::tuple<int,int> project(vec3 v) {
+std::tuple<int,int, int> project(vec3 v) {
     return { (v.x + 1.) *  width/2,
-             (v.y + 1.) * height/2 };
+             (v.y + 1.) * height/2, 
+             (v.z + 1.) * 255./2 };
 }
 
 double signed_triangle_area(int ax, int ay, int bx, int by, int cx, int cy){
     return .5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));
 }
 
-void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuffer, TGAColor color) {
+void triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz,  TGAImage& zbuffer, TGAImage&framebuffer, TGAColor color) {
     int bbminx = std::min(std::min(ax,bx), cx);
     int bbminy = std::min(std::min(ay,by), cy);
     int bbmaxx = std::max(std::max(ax,bx), cx);
@@ -64,6 +65,9 @@ void triangle(int ax, int ay, int bx, int by, int cx, int cy, TGAImage &framebuf
             double beta = signed_triangle_area(x, y, cx, cy, ax, ay) / total_area;
             double gamma = signed_triangle_area(x, y, ax, ay, bx, by) / total_area;
             if (alpha <0 || beta <0 || gamma <0) continue;
+            unsigned char z = static_cast<unsigned char>(alpha * az + beta * bz + gamma*cz);
+            if (z <= zbuffer.get(x,y)[0]) continue;
+            zbuffer.set(x,y, {z});
             framebuffer.set(x,y, color);
         }
     }
@@ -78,16 +82,18 @@ int main(int argc, char** argv) {
 
     Model model(argv[1]);
     TGAImage framebuffer(width, height, TGAImage::RGB);
+    TGAImage zbuffer(width, height, TGAImage::GRAYSCALE);
 
     for (int i=0; i<model.get_nface(); i++) {
-        auto [ax, ay] = project(model.get_vert(i, 0));
-        auto [bx, by] = project(model.get_vert(i, 1));
-        auto [cx, cy] = project(model.get_vert(i, 2));
+        auto [ax, ay, az] = project(model.get_vert(i, 0));
+        auto [bx, by, bz] = project(model.get_vert(i, 1));
+        auto [cx, cy, cz] = project(model.get_vert(i, 2));
         TGAColor random;
         for(int c :{0, 1, 2}) random[c] = std::rand() % 255;
-        triangle(ax, ay, bx, by, cx, cy, framebuffer, random);
+        triangle(ax, ay, az, bx, by, bz, cx, cy, cz, zbuffer, framebuffer, random);
     }
 
+    zbuffer.write_tga_file("zbuffer.tga");
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
 }
