@@ -1,5 +1,6 @@
 #include <tuple>
 #include <cmath>
+#include <numbers>
 
 #include "vec.h"
 #include "model.h"
@@ -45,6 +46,17 @@ std::tuple<int,int, int> project(vec3 v) {
              (v.z + 1.) * 255./2 };
 }
 
+vec3 rotate(vec3 v){
+    constexpr double alpha = std::numbers::pi / 6;
+    mat<3, 3> Ry = {{{std::cos(alpha), 0, std::sin(alpha)}, {0,1,0}, {-std::sin(alpha), 0, std::cos(alpha)}}} ;
+    return Ry * v;
+}
+
+vec3 perspective(vec3 v){
+    constexpr double c = 3;
+    return v / (1 - v.z/c);
+}
+
 double signed_triangle_area(int ax, int ay, int bx, int by, int cx, int cy){
     return .5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));
 }
@@ -85,9 +97,9 @@ int main(int argc, char** argv) {
     TGAImage zbuffer(width, height, TGAImage::GRAYSCALE);
 
     for (int i=0; i<model.get_nface(); i++) {
-        auto [ax, ay, az] = project(model.get_vert(i, 0));
-        auto [bx, by, bz] = project(model.get_vert(i, 1));
-        auto [cx, cy, cz] = project(model.get_vert(i, 2));
+        auto [ax, ay, az] = project(perspective(rotate(model.get_vert(i, 0))));
+        auto [bx, by, bz] = project(perspective(rotate(model.get_vert(i, 1))));
+        auto [cx, cy, cz] = project(perspective(rotate(model.get_vert(i, 2))));
         TGAColor random;
         for(int c :{0, 1, 2}) random[c] = std::rand() % 255;
         triangle(ax, ay, az, bx, by, bz, cx, cy, cz, zbuffer, framebuffer, random);
