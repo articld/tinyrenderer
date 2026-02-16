@@ -1,6 +1,7 @@
 #include <tuple>
 #include <cmath>
 #include <numbers>
+#include <vector>
 
 #include "vec.h"
 #include "model.h"
@@ -61,7 +62,9 @@ double signed_triangle_area(int ax, int ay, int bx, int by, int cx, int cy){
     return .5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));
 }
 
-void triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz,  TGAImage& zbuffer, TGAImage&framebuffer, TGAColor color) {
+void triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, std::vector<double>& zbuffer,
+              TGAImage&framebuffer, TGAColor color) {
+
     int bbminx = std::min(std::min(ax,bx), cx);
     int bbminy = std::min(std::min(ay,by), cy);
     int bbmaxx = std::max(std::max(ax,bx), cx);
@@ -77,11 +80,24 @@ void triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, in
             double beta = signed_triangle_area(x, y, cx, cy, ax, ay) / total_area;
             double gamma = signed_triangle_area(x, y, ax, ay, bx, by) / total_area;
             if (alpha <0 || beta <0 || gamma <0) continue;
-            unsigned char z = static_cast<unsigned char>(alpha * az + beta * bz + gamma*cz);
-            if (z <= zbuffer.get(x,y)[0]) continue;
-            zbuffer.set(x,y, {z});
+            double z =alpha * az + beta * bz + gamma*cz;
+            if (z <= zbuffer[x+y * framebuffer.width()]) continue;
+            zbuffer[x+y * framebuffer.width()] = z;
             framebuffer.set(x,y, color);
         }
+    }
+}
+
+void write_zbuffer_img(std::vector<double>& zbuffer, TGAImage& zbuffer_img){
+    double max = 0;
+    int y = 0;
+
+    for(auto i = zbuffer.begin(); i < zbuffer.end(); i++) max = *i > max ? *i : max;
+    for(uint32_t i = 0; i < zbuffer.size(); i++){
+        unsigned char z = static_cast<unsigned char>((zbuffer[i] / max) * 255);
+        int x = i % width;
+        if(i != 0 && x == 0) y++;
+        zbuffer_img.set(x,y, {z});
     }
 }
 
@@ -94,7 +110,10 @@ int main(int argc, char** argv) {
 
     Model model(argv[1]);
     TGAImage framebuffer(width, height, TGAImage::RGB);
-    TGAImage zbuffer(width, height, TGAImage::GRAYSCALE);
+
+    std::vector<double> zbuffer(width * height);
+    TGAImage zbuffer_img(width, height, TGAImage::GRAYSCALE);
+
 
     for (int i=0; i<model.get_nface(); i++) {
         auto [ax, ay, az] = project(perspective(rotate(model.get_vert(i, 0))));
@@ -105,7 +124,9 @@ int main(int argc, char** argv) {
         triangle(ax, ay, az, bx, by, bz, cx, cy, cz, zbuffer, framebuffer, random);
     }
 
-    zbuffer.write_tga_file("zbuffer.tga");
+    write_zbuffer_img(zbuffer, zbuffer_img);
+
+    zbuffer_img.write_tga_file("zbuffer.tga");
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
 }
