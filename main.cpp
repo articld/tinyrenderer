@@ -10,12 +10,6 @@
 constexpr int width  = 800;
 constexpr int height = 800;
 
-constexpr TGAColor white   = {255, 255, 255, 255}; // attention, BGRA order
-constexpr TGAColor green   = {  0, 255,   0, 255};
-constexpr TGAColor red     = {  0,   0, 255, 255};
-constexpr TGAColor blue    = {255, 128,  64, 255};
-constexpr TGAColor yellow  = {  0, 200, 255, 255};
-
 std::tuple<int,int, int> project(vec3 v) {
     return { (v.x + 1.) *  width/2,
              (v.y + 1.) * height/2, 
@@ -37,7 +31,7 @@ double signed_triangle_area(int ax, int ay, int bx, int by, int cx, int cy){
     return .5*((by-ay)*(bx+ax) + (cy-by)*(cx+bx) + (ay-cy)*(ax+cx));
 }
 
-void triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, std::vector<double>& zbuffer,
+void rasterize(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, int cz, std::vector<double>& zbuffer,
               TGAImage&framebuffer, TGAColor color) {
 
     int bbminx = std::min(std::min(ax,bx), cx);
@@ -96,7 +90,7 @@ int main(int argc, char** argv) {
         auto [cx, cy, cz] = project(perspective(rotate(model.get_vert(i, 2))));
         TGAColor random;
         for(int c :{0, 1, 2}) random[c] = std::rand() % 255;
-        triangle(ax, ay, az, bx, by, bz, cx, cy, cz, zbuffer, framebuffer, random);
+        rasterize(ax, ay, az, bx, by, bz, cx, cy, cz, zbuffer, framebuffer, random);
     }
 
     //write_zbuffer_img(zbuffer, zbuffer_img);
