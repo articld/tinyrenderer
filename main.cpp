@@ -16,31 +16,6 @@ constexpr TGAColor red     = {  0,   0, 255, 255};
 constexpr TGAColor blue    = {255, 128,  64, 255};
 constexpr TGAColor yellow  = {  0, 200, 255, 255};
 
-void draw_line2d(int ax, int ay, int bx, int by, TGAImage &framebuffer, TGAColor color) {
-    bool steep = std::abs(ax-bx) < std::abs(ay-by);
-    if (steep) {
-        std::swap(ax, ay);
-        std::swap(bx, by);
-    }
-    if (ax>bx) {
-        std::swap(ax, bx);
-        std::swap(ay, by);
-    }
-    int y = ay;
-    int ierror = 0;
-    for (int x=ax; x<=bx; x++) {
-        if (steep)
-            framebuffer.set(y, x, color);
-        else
-            framebuffer.set(x, y, color);
-        ierror += 2 * std::abs(by-ay);
-        if (ierror > bx - ax) {
-            y += by > ay ? 1 : -1;
-            ierror -= 2 * (bx-ax);
-        }
-    }
-}
-
 std::tuple<int,int, int> project(vec3 v) {
     return { (v.x + 1.) *  width/2,
              (v.y + 1.) * height/2, 
@@ -87,7 +62,7 @@ void triangle(int ax, int ay, int az, int bx, int by, int bz, int cx, int cy, in
         }
     }
 }
-
+/*
 void write_zbuffer_img(std::vector<double>& zbuffer, TGAImage& zbuffer_img){
     double max = 0;
     int y = 0;
@@ -100,7 +75,7 @@ void write_zbuffer_img(std::vector<double>& zbuffer, TGAImage& zbuffer_img){
         zbuffer_img.set(x,y, {z});
     }
 }
-
+*/
 
 int main(int argc, char** argv) {
     if (argc != 2) {
@@ -124,9 +99,9 @@ int main(int argc, char** argv) {
         triangle(ax, ay, az, bx, by, bz, cx, cy, cz, zbuffer, framebuffer, random);
     }
 
-    write_zbuffer_img(zbuffer, zbuffer_img);
+    //write_zbuffer_img(zbuffer, zbuffer_img);
 
-    zbuffer_img.write_tga_file("zbuffer.tga");
+    //zbuffer_img.write_tga_file("zbuffer.tga");
     framebuffer.write_tga_file("framebuffer.tga");
     return 0;
 }

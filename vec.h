@@ -81,8 +81,12 @@ template<int n> double norm(const vec<n>& v){
     return sqrt(v*v);
 }
 
-template<int n> vec<n> normalize(const vec<n>& v){
+template<int n> vec<n> normalized(const vec<n>& v){
     return v / norm(v);
+}
+
+inline vec3 cross(const vec3 &v1, const vec3 &v2) {
+    return {v1.y*v2.z - v1.z*v2.y, v1.z*v2.x - v1.x*v2.z, v1.x*v2.y - v1.y*v2.x};
 }
 
 template<int n> struct dt;
