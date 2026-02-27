@@ -25,6 +25,36 @@ struct RandomShader : IShader {
     }
 };
 
+struct PhongShader : IShader {
+    const Model &model;
+    vec3 tri[3];  // triangle in eye coordinates
+    vec3 l;
+
+    PhongShader(const vec3 light, const Model &m) : model(m) {
+        l = normalized((ModelView * vec4{light.x, light.y, light.z , 0.}).xyz());
+    }
+
+    virtual vec4 vertex(const int face, const int vert) {
+        vec3 v = model.get_vert(face, vert);                          // current vertex in object coordinates
+        vec4 gl_Position = ModelView * vec4{v.x, v.y, v.z, 1.};
+        tri[vert] = gl_Position.xyz();                            // in eye coordinates
+        return Perspective * gl_Position;                         // in clip coordinates
+    }
+
+    virtual std::pair<bool,TGAColor> fragment(const vec3 bar) const {
+        TGAColor color = {255, 255, 255, 255};
+        vec3 n = normalized(cross(tri[0] - tri[1], tri[0] - tri[2]));
+        vec3 r = normalized(2* n * (n*l) - l);
+        double ambient = 0.3;
+        double diffuse = std::max(0. , n * l);
+        double specular = std::pow(std::max(r.z ,0.), 35);
+        for(int channel: {0,1,2})
+            color[channel] *= std::min(1., ambient + .4* diffuse + .9*specular);
+
+        return {false, color};                                    // do not discard the pixel
+    }
+};
+
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " obj/model.obj" << std::endl;
@@ -33,6 +63,7 @@ int main(int argc, char** argv) {
 
     constexpr int width  = 800;
     constexpr int height = 800;
+    constexpr vec3  light{ 1, 1, 1};
     constexpr vec3    eye{-1, 0, 2};
     constexpr vec3 center{ 0, 0, 0};
     constexpr vec3     up{ 0, 1, 0};
@@ -45,9 +76,8 @@ int main(int argc, char** argv) {
 
     for (int m=1; m<argc; m++) {
         Model model(argv[m]);
-        RandomShader shader(model);
+        PhongShader shader(light, model);
         for (int f=0; f<model.get_nface(); f++) {
-            shader.color = { std::rand()%255, std::rand()%255, std::rand()%255, 255 };
             Triangle clip = { shader.vertex(f, 0),
                               shader.vertex(f, 1),
                               shader.vertex(f, 2) };
