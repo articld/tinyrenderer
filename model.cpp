@@ -19,12 +19,18 @@ Model::Model(const std::string model_path) {
             iss >> trash;
             while (iss >> f >> trash >> t >> trash >> n) {
                 faces.push_back(--f);
+                faces.push_back(--n);
                 count++;
             }
             if (count!=3) {
                 std::cerr << "Error: the obj file is supposed to be triangulated" << std::endl;
                 return;
             }
+        } else if (!line.compare(0, 2, "vn ")) {
+            iss >> trash;
+            vec3 vn;
+            for (int i: {0,1,2}) iss >> vn[i];
+            verts_normal.push_back(vn);
         }
     }
 }

@@ -5,26 +5,6 @@
 extern mat<4,4> ModelView, Perspective; // "OpenGL" state matrices and
 extern std::vector<double> zbuffer;     // the depth buffer
 
-struct RandomShader : IShader {
-    const Model &model;
-    TGAColor color = {};
-    vec3 tri[3];  // triangle in eye coordinates
-
-    RandomShader(const Model &m) : model(m) {
-    }
-
-    virtual vec4 vertex(const int face, const int vert) {
-        vec3 v = model.get_vert(face, vert);                          // current vertex in object coordinates
-        vec4 gl_Position = ModelView * vec4{v.x, v.y, v.z, 1.};
-        tri[vert] = gl_Position.xyz();                            // in eye coordinates
-        return Perspective * gl_Position;                         // in clip coordinates
-    }
-
-    virtual std::pair<bool,TGAColor> fragment(const vec3 bar) const {
-        return {false, color};                                    // do not discard the pixel
-    }
-};
-
 struct PhongShader : IShader {
     const Model &model;
     vec3 tri[3];  // triangle in eye coordinates
