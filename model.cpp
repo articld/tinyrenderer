@@ -49,7 +49,13 @@ Model::Model(const std::string model_path) {
         std::cerr<<"texture file "<< texfile << " loading"<<(img.read_tga_file(texfile.c_str()) ? "ok":"failed")<<std::endl;
     };
     load_texture("_nm.tga", normalmap);
+    load_texture("_diffuse.tga", diffuse);
 
+}
+
+TGAColor Model::get_diff_text(const vec2 uv) const{
+    TGAColor c = diffuse.get(uv[0]*diffuse.width(), uv[1]*diffuse.height());
+    return c;
 }
 
 vec4 Model::get_norm_text(const vec2 uv) const{

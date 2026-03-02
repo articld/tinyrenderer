@@ -21,8 +21,8 @@ struct PhongShader : IShader{
     }
 
     virtual std::pair<bool, TGAColor> fragment(const vec3 bar) const{
-        TGAColor gl_FragColor = {255, 255, 255, 255}; // output color of the fragment
         vec2 uv = varying_uv[0] * bar[0] + varying_uv[1] * bar[1] + varying_uv[2] * bar[2];
+        TGAColor gl_FragColor = model.get_diff_text(uv);
         vec4 n = normalized(ModelView.invert_transpose() * model.get_norm_text(uv));
         vec4 r = normalized(n * (n * l)*2 - l); // reflected light direction
         double ambient = .3; // ambient light intensity
