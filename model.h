@@ -20,6 +20,7 @@ class Model{
 
         TGAImage diffuse = {};
         TGAImage normalmap = {};
+        TGAImage specularmap = {};
 
     public:
         Model(std::string model_path);
@@ -32,4 +33,5 @@ class Model{
 
         vec4 get_norm_text(const vec2 uv) const;
         TGAColor get_diff_text(const vec2 uv) const;
+        TGAColor get_spec_text(const vec2 uv) const;
 };

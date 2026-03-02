@@ -50,11 +50,17 @@ Model::Model(const std::string model_path) {
     };
     load_texture("_nm.tga", normalmap);
     load_texture("_diffuse.tga", diffuse);
+    load_texture("_spec.tga", specularmap);
 
 }
 
 TGAColor Model::get_diff_text(const vec2 uv) const{
     TGAColor c = diffuse.get(uv[0]*diffuse.width(), uv[1]*diffuse.height());
+    return c;
+}
+
+TGAColor Model::get_spec_text(const vec2 uv) const{
+    TGAColor c = specularmap.get(uv[0]*specularmap.width(), uv[1]*specularmap.height());
     return c;
 }
 
