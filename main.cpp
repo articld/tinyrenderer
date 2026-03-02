@@ -5,10 +5,40 @@
 extern mat<4,4> ModelView, Perspective; // "OpenGL" state matrices and
 extern std::vector<double> zbuffer;     // the depth buffer
 
+struct PhongShader : IShader{
+    const Model &model;
+    vec4 l;
+    vec2 varying_uv[3];
+
+    PhongShader(const vec3 light, const Model &m): model(m){
+        l = normalized((ModelView*vec4{light.x, light.y, light.z, 0.}));
+    }
+
+    virtual vec4 vertex(const int face, const int vert){
+        varying_uv[vert] = model.get_uv(face,vert);
+        vec4 gl_position = ModelView * model.get_vert(face, vert);
+        return Perspective * gl_position;
+    }
+
+    virtual std::pair<bool, TGAColor> fragment(const vec3 bar) const{
+        TGAColor gl_FragColor = {255, 255, 255, 255}; // output color of the fragment
+        vec2 uv = varying_uv[0] * bar[0] + varying_uv[1] * bar[1] + varying_uv[2] * bar[2];
+        vec4 n = normalized(ModelView.invert_transpose() * model.get_norm_text(uv));
+        vec4 r = normalized(n * (n * l)*2 - l); // reflected light direction
+        double ambient = .3; // ambient light intensity
+        double diff = std::max(0., n * l); // diffuse light intensity
+        double spec = std::pow(std::max(r.z, 0.), 35); // specular intensity, note that the camera lies on the z-axis (in eye coordinates), therefore simple r.z, since (0,0,1)*(r.x, r.y, r.z) = r.z
+        for (int channel : {0,1,2})
+            gl_FragColor[channel] *= std::min(1., ambient + .4*diff + .9*spec);
+        return {false, gl_FragColor}; // do not discard the pixel
+    }
+};
+
+/*
 struct PhongShader : IShader {
     const Model &model;
     vec3 tri[3];  // triangle in eye coordinates
-    vec3 l;
+    vec4 l;
     vec3 varying_norm[3];
 
     PhongShader(const vec3 light, const Model &m) : model(m) {
@@ -40,6 +70,7 @@ struct PhongShader : IShader {
         return {false, color};                                    // do not discard the pixel
     }
 };
+*/
 
 int main(int argc, char** argv) {
     if (argc < 2) {
@@ -47,8 +78,8 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    constexpr int width  = 800;
-    constexpr int height = 800;
+    constexpr int width  = 6400;
+    constexpr int height = 6400;
     constexpr vec3  light{ 1, 1, 1};
     constexpr vec3    eye{-1, 0, 2};
     constexpr vec3 center{ 0, 0, 0};
