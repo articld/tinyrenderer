@@ -9,6 +9,8 @@ struct PhongShader : IShader{
     const Model &model;
     vec4 l;
     vec2 varying_uv[3];
+    vec4 tri[3];
+    vec4 varying_norm[3];
 
     PhongShader(const vec3 light, const Model &m): model(m){
         l = normalized((ModelView*vec4{light.x, light.y, light.z, 0.}));
@@ -16,16 +18,31 @@ struct PhongShader : IShader{
 
     virtual vec4 vertex(const int face, const int vert){
         varying_uv[vert] = model.get_uv(face,vert);
+
+        vec4 n = model.get_norm(face, vert);
+        varying_norm[vert] = ModelView.invert_transpose() * n;
+
         vec4 gl_position = ModelView * model.get_vert(face, vert);
+        tri[vert] = gl_position;
         return Perspective * gl_position;
     }
 
     virtual std::pair<bool, TGAColor> fragment(const vec3 bar) const{
+        mat<2,4> E = {tri[1] - tri[0], tri[2] - tri[0]};
+        mat<2,2> U = {varying_uv[1] - varying_uv[0], varying_uv[2] - varying_uv[0]};
+        mat<2,4> T = U.invert() * E;
+        mat<4,4> D = {normalized(T[0]), //vettore tangente
+                      normalized(T[1]), //vettore bitangente
+                      normalized(varying_norm[0]*bar[0] + varying_norm[1]*bar[1] + varying_norm[2]*bar[2]), //n interpolato
+                      {0,0,0,1}};
+
         vec2 uv = varying_uv[0] * bar[0] + varying_uv[1] * bar[1] + varying_uv[2] * bar[2];
         TGAColor gl_FragColor = model.get_diff_text(uv);
         TGAColor gl_SpecColor = model.get_spec_text(uv);
-        vec4 n = normalized(ModelView.invert_transpose() * model.get_norm_text(uv));
+
+        vec4 n = normalized(D.invert_transpose() * model.get_norm_text(uv));
         vec4 r = normalized(n * (n * l)*2 - l); // reflected light direction
+
         double ambient = .3; // ambient light intensity
         double diff = std::max(0., n * l); // diffuse light intensity
         double spec = (3. * gl_SpecColor[0] / 255.) * std::pow(std::max(r.z, 0.), 35); // specular intensity, note that the camera lies on the z-axis (in eye coordinates), therefore simple r.z, since (0,0,1)*(r.x, r.y, r.z) = r.z
