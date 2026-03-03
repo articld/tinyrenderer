@@ -52,44 +52,6 @@ struct PhongShader : IShader{
     }
 };
 
-/*
-struct PhongShader : IShader {
-    const Model &model;
-    vec3 tri[3];  // triangle in eye coordinates
-    vec4 l;
-    vec3 varying_norm[3];
-
-    PhongShader(const vec3 light, const Model &m) : model(m) {
-        l = normalized((ModelView * vec4{light.x, light.y, light.z , 0.}).xyz());
-    }
-
-    virtual vec4 vertex(const int face, const int vert) {
-        vec3 v = model.get_vert(face, vert);                          // current vertex in object coordinates
-        vec3 n = model.get_norm(face, vert);
-        varying_norm[vert] = (ModelView.invert_transpose() * vec4{n.x, n.y, n.z, 0.}).xyz();
-        vec4 gl_Position = ModelView * vec4{v.x, v.y, v.z, 1.};
-        tri[vert] = gl_Position.xyz();                            // in eye coordinates
-        return Perspective * gl_Position;                         // in clip coordinates
-    }
-
-    virtual std::pair<bool,TGAColor> fragment(const vec3 bar) const {
-        TGAColor color = {255, 255, 255, 255};
-        //vec3 n = normalized(cross(tri[1]-tri[0], tri[2]-tri[0]));
-        vec3 n = normalized(varying_norm[0] * bar[0] +
-                            varying_norm[1] * bar[1] +
-                            varying_norm[2] * bar[2]);
-        vec3 r = normalized(2* n * (n*l) - l);
-        double ambient = 0.3;
-        double diffuse = std::max(0. , n * l);
-        double specular = std::pow(std::max(r.z ,0.), 35);
-        for(int channel: {0,1,2})
-            color[channel] *= std::min(1., ambient + .4* diffuse + .9*specular);
-
-        return {false, color};                                    // do not discard the pixel
-    }
-};
-*/
-
 int main(int argc, char** argv) {
     if (argc < 2) {
         std::cerr << "Usage: " << argv[0] << " obj/model.obj" << std::endl;
