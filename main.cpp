@@ -19,8 +19,7 @@ struct PhongShader : IShader{
     virtual vec4 vertex(const int face, const int vert){
         varying_uv[vert] = model.get_uv(face,vert);
 
-        vec4 n = model.get_norm(face, vert);
-        varying_norm[vert] = ModelView.invert_transpose() * n;
+        varying_norm[vert] = ModelView.invert_transpose() * model.get_norm(face, vert);
 
         vec4 gl_position = ModelView * model.get_vert(face, vert);
         tri[vert] = gl_position;
@@ -37,18 +36,18 @@ struct PhongShader : IShader{
                       {0,0,0,1}};
 
         vec2 uv = varying_uv[0] * bar[0] + varying_uv[1] * bar[1] + varying_uv[2] * bar[2];
-        TGAColor gl_FragColor = model.get_diff_text(uv);
-        TGAColor gl_SpecColor = model.get_spec_text(uv);
-
-        vec4 n = normalized(D.invert_transpose() * model.get_norm_text(uv));
+        vec4 n = normalized(D.transpose() * model.get_norm_text(uv));
         vec4 r = normalized(n * (n * l)*2 - l); // reflected light direction
 
-        double ambient = .3; // ambient light intensity
-        double diff = std::max(0., n * l); // diffuse light intensity
-        double spec = (3. * gl_SpecColor[0] / 255.) * std::pow(std::max(r.z, 0.), 35); // specular intensity, note that the camera lies on the z-axis (in eye coordinates), therefore simple r.z, since (0,0,1)*(r.x, r.y, r.z) = r.z
+        TGAColor frag_color = model.get_diff_text(uv);
+        TGAColor spec_color = model.get_spec_text(uv);
+
+        double ambient = .4; // ambient light intensity
+        double diff = 1. * std::max(0., n * l); // diffuse light intensity
+        double spec = (3. * spec_color[0] / 255.) * std::pow(std::max(r.z, 0.), 35); // specular intensity, note that the camera lies on the z-axis (in eye coordinates), therefore simple r.z, since (0,0,1)*(r.x, r.y, r.z) = r.z
         for (int channel : {0,1,2})
-            gl_FragColor[channel] *= std::min(1., ambient + .4*diff + .9*spec);
-        return {false, gl_FragColor}; // do not discard the pixel
+            frag_color[channel] = std::min<int>(255, frag_color[channel] * (ambient + diff + spec));
+        return {false, frag_color}; // do not discard the pixel
     }
 };
 
